@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>Lab 2, zad2</title>
+<style>
+    body {
+        background-color: #E0E0E0;
+        user-select: none;
+    }
+    canvas {
+        background-color: #FFFFFF;
+        display: block;
+    }
+    #canvasholder {
+        border: 2px solid #000;
+        float: left;
+    }
+</style>
+<script>
+"use strict";
+
+let canvas, graphics;
+
+function generateRandomColor() {
+    const r = Math.floor(Math.random() * 256);
+    const g = Math.floor(Math.random() * 256);
+    const b = Math.floor(Math.random() * 256);
+    return `rgb(${r},${g},${b})`;
+}
+
+function configureMouseEvents() {
+    let isDrawing = false;
+    let startX, startY, lastX, lastY;
+    let selectedColor;
+
+    function handleMouseDown(evt) {
+        if (evt.button !== 0 || isDrawing) return;
+        const rect = canvas.getBoundingClientRect();
+        const x = Math.round(evt.clientX - rect.left);
+        const y = Math.round(evt.clientY - rect.top);
+
+        isDrawing = true;
+        startX = lastX = x;
+        startY = lastY = y;
+
+        document.addEventListener("mousemove", handleMouseMove);
+        document.addEventListener("mouseup", handleMouseUp);
+
+        selectedColor = parseInt(document.getElementById("colorChoice").value);
+    }
+
+    function handleMouseMove(evt) {
+        if (!isDrawing) return;
+
+        const rect = canvas.getBoundingClientRect();
+        const x = Math.round(evt.clientX - rect.left);
+        const y = Math.round(evt.clientY - rect.top);
+
+        if (Math.abs(x - lastX) + Math.abs(y - lastY) < 3) return;
+
+        const tool = parseInt(document.getElementById("toolChoice").value);
+
+        switch (selectedColor) {
+            case 0: graphics.fillStyle = generateRandomColor(); break;
+            case 1: graphics.fillStyle = "red"; break;
+            case 2: graphics.fillStyle = "green"; break;
+            case 3: graphics.fillStyle = "blue"; break;
+            case 4: graphics.fillStyle = "yellow"; break;
+        }
+
+        if (tool === 0) {
+            graphics.fillRect(x - 20, y - 20, 40, 40);
+            graphics.strokeRect(x - 20, y - 20, 40, 40);
+        } else if (tool === 1) {
+            renderHexagon(x, y, 20);
+        }
+
+        lastX = x;
+        lastY = y;
+    }
+
+    function handleMouseUp(evt) {
+        isDrawing = false;
+        document.removeEventListener("mousemove", handleMouseMove);
+        document.removeEventListener("mouseup", handleMouseMove);
+    }
+
+    canvas.addEventListener("mousedown", handleMouseDown);
+}
+
+function enhanceGraphicsContext(ctx) {
+    ctx.strokeLine = function(x1, y1, x2, y2) {
+        this.beginPath();
+        this.moveTo(x1, y1);
+        this.lineTo(x2, y2);
+        this.stroke();
+    };
+    ctx.fillCircle = function(x, y, r) {
+        this.beginPath();
+        this.arc(x, y, r, 0, 2 * Math.PI);
+        this.fill();
+    };
+    ctx.strokeCircle = function(x, y, r) {
+        this.beginPath();
+        this.arc(x, y, r, 0, 2 * Math.PI);
+        this.stroke();
+    };
+    ctx.fillPoly = function(...coords) {
+        if (coords.length < 6) return;
+        this.beginPath();
+        this.moveTo(coords[0], coords[1]);
+        for (let i = 2; i + 1 < coords.length; i += 2) {
+            this.lineTo(coords[i], coords[i + 1]);
+        }
+        this.closePath();
+        this.fill();
+    };
+    ctx.strokePoly = function(...coords) {
+        if (coords.length < 4) return;
+        this.beginPath();
+        this.moveTo(coords[0], coords[1]);
+        for (let i = 2; i + 1 < coords.length; i += 2) {
+            this.lineTo(coords[i], coords[i + 1]);
+        }
+        this.closePath();
+        this.stroke();
+    };
+    ctx.getRGB = function(x, y) {
+        const data = this.getImageData(x, y, 1, 1).data;
+        return [data[0], data[1], data[2], data[3]];
+    };
+}
+
+function initializeCanvas() {
+    try {
+        canvas = document.getElementById("canvas");
+        graphics = canvas.getContext("2d");
+    } catch (err) {
+        document.getElementById("canvasholder").innerHTML = "<p>Canvas initialization error.</p>";
+        return;
+    }
+    enhanceGraphicsContext(graphics);
+    configureMouseEvents();
+    graphics.fillStyle = "white";
+    graphics.fillRect(0, 0, canvas.width, canvas.height);
+}
+
+function clearCanvas() {
+    graphics.clearRect(0, 0, canvas.width, canvas.height);
+}
+
+function renderHexagon(centerX, centerY, radius) {
+    const points = [];
+    for (let i = 0; i < 6; i++) {
+        const angle = Math.PI / 6 + i * Math.PI / 3;
+        points.push(centerX + radius * Math.cos(angle));
+        points.push(centerY + radius * Math.sin(angle));
+    }
+    graphics.fillPoly(...points);
+    graphics.strokePoly(...points);
+}
+</script>
+</head>
+<body onload="initializeCanvas()">
+<h2>Lab 2, zad 2</h2>
+<noscript><p>This page requires JavaScript to function.</p></noscript>
+<div style="display: flex; gap: 20px; align-items: center;">
+    <label><strong>kolor:</strong>
+        <select id="colorChoice">
+            <option value="0" selected>Random</option>
+            <option value="1">Red</option>
+            <option value="2">Green</option>
+            <option value="3">Blue</option>
+            <option value="4">Yellow</option>
+        </select>
+    </label>
+    <label><strong>Kształt:</strong>
+        <select id="toolChoice">
+            <option value="0" selected>kwadrat</option>
+            <option value="1">sześciokąt</option>
+        </select>
+    </label>
+    <button onclick="clearCanvas()">Clear</button>
+</div>
+<div id="canvasholder">
+    <canvas id="canvas" width="800" height="600">Canvas not supported.</canvas>
+</div>
+</body>
+</html>

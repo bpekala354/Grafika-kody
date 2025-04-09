@@ -1,0 +1,258 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>Graf sceny 2D</title>
+
+<script>
+
+var kanwa;
+var grafika;
+
+var LEWO = -4;
+var PRAWO = 4;
+var DOL = -3;
+var GORA = 3;
+
+var TLO = "white";
+
+var rozmiarPiksela;
+var numerKlatki = 0;
+
+var swiat;
+
+var fiolet_lewa, fiolet_prawa, fiolet_belka, fiolet_podstawa;
+var niebieska_lewa, niebieska_prawa, niebieska_belka, niebieska_podstawa;
+var zielona_lewa, zielona_prawa, zielona_belka, zielona_podstawa;
+
+function stworzSwiat() {
+    swiat = new ObiektZlozony();
+
+    fiolet_lewa = new ObiektPrzeksztalcony(szesciokat);
+    fiolet_lewa.ustawPrzesuniecie(-3.15, 1.7).ustawKolor("black").ustawSkale(0.4,0.4);
+    swiat.dodaj(fiolet_lewa);
+
+    fiolet_prawa = new ObiektPrzeksztalcony(szesciokat);
+    fiolet_prawa.ustawPrzesuniecie(-0.85, 1.30).ustawKolor("black").ustawSkale(0.4,0.4);
+    swiat.dodaj(fiolet_prawa);
+
+    fiolet_belka = new ObiektPrzeksztalcony(wypelnionyProstokat);
+    fiolet_belka.ustawPrzesuniecie(-2, 1.5).ustawKolor("red").ustawSkale(2.4,0.15).ustawObrot(-10);
+    swiat.dodaj(fiolet_belka);
+
+    fiolet_podstawa = new ObiektPrzeksztalcony(wypelnionyTrojkat);
+    fiolet_podstawa.ustawPrzesuniecie(-2.0, 0.2).ustawKolor("purple").ustawSkale(0.4,1.3);
+    swiat.dodaj(fiolet_podstawa);
+
+    niebieska_lewa = new ObiektPrzeksztalcony(szesciokat);
+    niebieska_lewa.ustawPrzesuniecie(-1.45, -0.75).ustawKolor("black").ustawSkale(0.5,0.5);
+    swiat.dodaj(niebieska_lewa);
+
+    niebieska_prawa = new ObiektPrzeksztalcony(szesciokat);
+    niebieska_prawa.ustawPrzesuniecie(1.45, -1.25).ustawKolor("black").ustawSkale(0.5,0.5);
+    swiat.dodaj(niebieska_prawa);
+
+    niebieska_belka = new ObiektPrzeksztalcony(wypelnionyProstokat);
+    niebieska_belka.ustawPrzesuniecie(0, -1).ustawKolor("red").ustawSkale(3,0.2).ustawObrot(-10);
+    swiat.dodaj(niebieska_belka);
+
+    niebieska_podstawa = new ObiektPrzeksztalcony(wypelnionyTrojkat);
+    niebieska_podstawa.ustawPrzesuniecie(0, -2.8).ustawKolor("blue").ustawSkale(0.5,1.8);
+    swiat.dodaj(niebieska_podstawa);
+
+    zielona_lewa = new ObiektPrzeksztalcony(szesciokat);
+    zielona_lewa.ustawPrzesuniecie(1.3, 1.95).ustawKolor("black").ustawSkale(0.25,0.25);
+    swiat.dodaj(zielona_lewa);
+
+    zielona_prawa = new ObiektPrzeksztalcony(szesciokat);
+    zielona_prawa.ustawPrzesuniecie(2.7, 1.70).ustawKolor("black").ustawSkale(0.25,0.25);
+    swiat.dodaj(zielona_prawa);
+
+    zielona_belka = new ObiektPrzeksztalcony(wypelnionyProstokat);
+    zielona_belka.ustawPrzesuniecie(2, 1.80).ustawKolor("red").ustawSkale(1.5,0.1).ustawObrot(-10);
+    swiat.dodaj(zielona_belka);
+
+    zielona_podstawa = new ObiektPrzeksztalcony(wypelnionyTrojkat);
+    zielona_podstawa.ustawPrzesuniecie(2, 1).ustawKolor("green").ustawSkale(0.25,0.8);
+    swiat.dodaj(zielona_podstawa);
+}
+
+var szesciokat = new WezelSceny();
+szesciokat.rysuj = function (g) {
+    var v = 6;
+    g.beginPath();
+    for (i = 0; i <= v; i++) {
+        grafika.lineTo(Math.cos(i * 2 * Math.PI / v), Math.sin(i * 2 * Math.PI / v));
+        grafika.lineTo(0,0);
+        grafika.lineTo(Math.cos(i * 2 * Math.PI / v), Math.sin(i * 2 * Math.PI / v));
+    }
+    g.closePath();
+    g.stroke();
+}
+
+function aktualizujKlatke() {
+    niebieska_lewa.ustawObrot(-numerKlatki * 0.8);
+    niebieska_prawa.ustawObrot(numerKlatki * 0.8);
+    fiolet_lewa.ustawObrot(-numerKlatki * 0.8);
+    fiolet_prawa.ustawObrot(numerKlatki * 0.8);
+    zielona_lewa.ustawObrot(-numerKlatki * 0.8);
+    zielona_prawa.ustawObrot(numerKlatki * 0.8);
+    numerKlatki++;
+}
+
+// ----- Obiekty graficzne i transformacje -----
+
+function WezelSceny() {
+    this.wypelnienie = null;
+    this.obrys = null;
+}
+WezelSceny.prototype.rysuj = function(g) {
+    throw "rysuj niezaimplementowane";
+}
+WezelSceny.prototype.rysujWezel = function(g) {
+    grafika.save();
+    if (this.wypelnienie) g.fillStyle = this.wypelnienie;
+    if (this.obrys) g.strokeStyle = this.obrys;
+    this.rysuj(g);
+    grafika.restore();
+}
+WezelSceny.prototype.ustawKolor = function(kolor) {
+    this.wypelnienie = kolor;
+    this.obrys = kolor;
+    return this;
+}
+
+function ObiektZlozony() {
+    WezelSceny.call(this);
+    this.podwezly = [];
+}
+ObiektZlozony.prototype = new WezelSceny();
+ObiektZlozony.prototype.dodaj = function(w) {
+    this.podwezly.push(w);
+    return this;
+}
+ObiektZlozony.prototype.rysuj = function(g) {
+    for (var i = 0; i < this.podwezly.length; i++)
+        this.podwezly[i].rysujWezel(g);
+}
+
+function ObiektPrzeksztalcony(obiekt) {
+    WezelSceny.call(this);
+    this.obiekt = obiekt;
+    this.obrot = 0;
+    this.skalax = 1;
+    this.skalay = 1;
+    this.przesx = 0;
+    this.przesy = 0;
+}
+ObiektPrzeksztalcony.prototype = new WezelSceny();
+ObiektPrzeksztalcony.prototype.ustawObrot = function(kat) {
+    this.obrot = kat;
+    return this;
+}
+ObiektPrzeksztalcony.prototype.ustawSkale = function(sx, sy) {
+    this.skalax = sx;
+    this.skalay = sy;
+    return this;
+}
+ObiektPrzeksztalcony.prototype.ustawPrzesuniecie = function(dx, dy) {
+    this.przesx = dx;
+    this.przesy = dy;
+    return this;
+}
+ObiektPrzeksztalcony.prototype.rysuj = function(g) {
+    g.save();
+    if (this.przesx || this.przesy) g.translate(this.przesx, this.przesy);
+    if (this.obrot) g.rotate(this.obrot / 180 * Math.PI);
+    if (this.skalax !== 1 || this.skalay !== 1) g.scale(this.skalax, this.skalay);
+    this.obiekt.rysujWezel(g);
+    g.restore();
+}
+
+// Podstawowe kształty
+var wypelnionyProstokat = new WezelSceny();
+wypelnionyProstokat.rysuj = g => g.fillRect(-0.5, -0.5, 1, 1);
+
+var wypelnionyTrojkat = new WezelSceny();
+wypelnionyTrojkat.rysuj = g => {
+    g.beginPath();
+    g.moveTo(-0.5, 0);
+    g.lineTo(0.5, 0);
+    g.lineTo(0, 1);
+    g.closePath();
+    g.fill();
+}
+
+// --- Rysowanie i animacja ---
+
+function rysuj() {
+    grafika.save();
+    grafika.fillStyle = TLO;
+    grafika.fillRect(0,0,kanwa.width,kanwa.height);
+    grafika.fillStyle = "black";
+    ustawOgraniczenia(grafika, LEWO, PRAWO, GORA, DOL, false);
+    grafika.lineWidth = rozmiarPiksela;
+    swiat.rysujWezel(grafika);
+    grafika.restore();
+}
+
+function ustawOgraniczenia(g, lewo, prawo, gora, dol, zachowajProporcje) {
+    var szer = kanwa.width;
+    var wys = kanwa.height;
+    var px = Math.abs((prawo - lewo) / szer);
+    var py = Math.abs((dol - gora) / wys);
+    rozmiarPiksela = Math.min(px, py);
+    g.scale(szer / (prawo - lewo), wys / (dol - gora));
+    g.translate(-lewo, -gora);
+}
+
+var animacjaAktywna = false;
+
+function klatka() {
+    if (animacjaAktywna) {
+        aktualizujKlatke();
+        rysuj();
+        requestAnimationFrame(klatka);
+    }
+}
+
+function zmienStanAnimacji() {
+    var aktywna = document.getElementById("animuj").checked;
+    if (aktywna != animacjaAktywna) {
+        animacjaAktywna = aktywna;
+        if (animacjaAktywna)
+            requestAnimationFrame(klatka);
+    }
+}
+
+function start() {
+    kanwa = document.getElementById("kanwa");
+    if (!kanwa.getContext) {
+        document.getElementById("wiadomosc").innerHTML = "Błąd: przeglądarka nie obsługuje canvas";
+        return;
+    }
+    grafika = kanwa.getContext("2d");
+    document.getElementById("animuj").checked = false;
+    document.getElementById("animuj").onchange = zmienStanAnimacji;
+    stworzSwiat();
+    rysuj();
+}
+
+</script>
+</head>
+<body onload="start()" style="background-color:#EEEEEE">
+
+<h3>Graf sceny 2D</h3>
+
+<noscript><p><b style="color:red">Błąd: Ta strona wymaga JavaScript.</b></p></noscript>
+
+<p id="wiadomosc">
+    <label><input type="checkbox" id="animuj"><b>Uruchom animację</b></label>
+</p>
+
+<div style="float:left; border: 2px solid black">
+    <canvas id="kanwa" width="800" height="600" style="display:block"></canvas>
+</div>
+
+</body>
+</html>
